@@ -1,28 +1,34 @@
-from imports import *
-########################################################################################################################
+from Imports import *
+
+# ******************************************************************************************************************** #
 class Node:
     def __init__(self, square, fitness):
         self.square = square
         self.fitness = fitness
-    def getSquare(self):
-        return self.square
-    def getFitness(self):
-        return self.fitness
+
     def __repr__(self):
         return str(self.square) + " " + str(self.fitness)
+
     def __str__(self):
         return str(self.square) + " " + str(self.fitness)
-########################################################################################################################
+
+    def getSquare(self):
+        return self.square
+
+    def getFitness(self):
+        return self.fitness
+
+# ******************************************************************************************************************** #
 class Agent:
     def __init__(self, w, popnum, ngen):
         self.problem = Problem(w)
         self.w = w
         self.popnum = popnum
         self.ngen = ngen
-        self.all = [j for j in range(1, self.w**2 + 1)]
+        self.all = [j for j in range(1, self.w ** 2 + 1)]
 
     def GA(self):
-        population = self.initPopulation()
+        population = self.init()
         for i in range(self.ngen):
             new_population = []
             for j in range(self.popnum):
@@ -38,12 +44,12 @@ class Agent:
                     fit = 1 / fit
                 new_population.append(Node(c, fit))
             population = new_population
-            population.sort(key=lambda x : x.fitness, reverse=True)
+            population.sort(key=lambda x: x.fitness, reverse=True)
         return population[0]
 
-    def initPopulation(self):
+    def init(self):
         q = int(self.w)
-        base = [[i + j for i in range(1, q + 1)] for j in range(0, q**2, q)]
+        base = [[i + j for i in range(1, q + 1)] for j in range(0, q ** 2, q)]
         base = np.array(base)
         shape = base.shape
         base = base.flatten()
@@ -82,7 +88,7 @@ class Agent:
                 pass
 
         temp = []
-        for i in  range(mid, len(y)):
+        for i in range(mid, len(y)):
             if y[i] in x[:mid]:
                 temp.append(helper[0])
                 helper.remove(helper[0])
@@ -93,7 +99,6 @@ class Agent:
         c = c.reshape(shape)
 
         return c.tolist()
-
 
     def mutate(self, c):
         c = np.array(c)
@@ -109,14 +114,12 @@ class Agent:
 
         return c.tolist()
 
-
-
-    def childNode(self, square, action):
-        [(x, y),(x2, y2)] = action
+    def child_node(self, square, action):
+        [(x, y), (x2, y2)] = action
         child = np.array(square)
         child[x][y], child[x2][y2] = child[x2][y2], child[x][y]
         return child.tolist()
-#################################################################################################
+# ******************************************************************************************************************** #
 class Problem:
     def __init__(self, size):
         self.size = size
@@ -133,36 +136,22 @@ class Problem:
                 if j == self.size - i - 1:
                     test_list[-1] += square[i][j]
         return sum([abs(i - self.magic_number) for i in test_list])
-########################################################################################################################
-def mgoalTest(square):
-    test_list = [0] * (2 * 3 + 2)
-    for i in range(0, 3):
-        for j in range(0, 3):
-            test_list[i] += square[i][j]
-            test_list[j + 3] += square[i][j]
-            if i == j:
-                test_list[-2] += square[i][j]
-            if j == 3 - i - 1:
-                test_list[-1] += square[i][j]
 
-    return test_list
 
-########################################################################################################################
-def goalTest(square):
-    test_list = [0] * (2 * 3 + 2)
-    for i in range(0, 3):
-        for j in range(0, 3):
-            test_list[i] += square[i][j]
-            test_list[j + 3] += square[i][j]
-            if i == j:
-                test_list[-2] += square[i][j]
-            if j == 3 - i - 1:
-                test_list[-1] += square[i][j]
-    return sum([abs(i - 15) for i in test_list])
-########################################################################################################################
-def fileToList(filename:str):
+# ******************************************************************************************************************** #
+def probability(p):
+    return p < random.uniform(0.0, 1.0)
+# ******************************************************************************************************************** #
+def exp_schedule(t, k=20, lam=0.005, limit=100):
+    if t < limit:
+        return k * math.exp(-lam * t)
+    else:
+        return 0
+# ******************************************************************************************************************** #
+def Convert_f2L(filename: str):
     with open(filename) as file:
         lines = file.read().splitlines()
+
         for line in lines:
             size = int(line[2:4])
 
@@ -173,16 +162,35 @@ def fileToList(filename:str):
             l = np.array(l).reshape(size, size)
 
             yield size, l.tolist()
-########################################################################################################################
-def probability(p):
-    return p < random.uniform(0.0, 1.0)
-########################################################################################################################
-def exp_schedule(t, k=20, lam=0.005, limit=100):
-    return k * math.exp(-lam * t) if t < limit else 0
-########################################################################################################################
+# ******************************************************************************************************************** #
+def goalTest(square):
+    test_list = [0] * (2 * 3 + 2)
+    for i in range(3):
+        for j in range(3):
+            test_list[i] += square[i][j]
+            test_list[j + 3] += square[i][j]
+            if i == j:
+                test_list[-2] += square[i][j]
+            if j == 3 - i - 1:
+                test_list[-1] += square[i][j]
+    return sum([abs(i - 15) for i in test_list])
+# ******************************************************************************************************************** #
+def mgoalTest(square):
+    test_list = [0] * (2 * 3 + 2)
+    for i in range(3):
+        for j in range(3):
+            test_list[i] += square[i][j]
+            test_list[j + 3] += square[i][j]
+            if i == j:
+                test_list[-2] += square[i][j]
+            if j == 3 - i - 1:
+                test_list[-1] += square[i][j]
+
+    return test_list
+# ******************************************************************************************************************** #
 if __name__ == "__main__":
     fields = list()
-    for size, square in fileToList("a.in"):
+    for size, square in Convert_f2L("a.in"):
         fields.append((size, square))
 
     agent = Agent(fields[0][0], 100, 50)

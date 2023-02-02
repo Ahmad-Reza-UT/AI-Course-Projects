@@ -1,44 +1,50 @@
 from Imports import *
 
 # ******************************************************************************************************************** #
+def schedule(t, k=20, lam=0.005, limit=100):
+    if t < limit:
+        return k * math.exp(-lam * t)
+    else:
+        return 0
+# ******************************************************************************************************************** #
+def probability(p):
+    return p > random.uniform(0.0, 1.0)
+# ******************************************************************************************************************** #
 class Agent:
-    def __init__(self, size, initial_state):
+    def __init__(self, size, initial_state, limit):
         self.problem = Problem(size)
         self.initial_state = initial_state
-        self.MAX = 100
+        self.MAX = limit
+        self.size = size
+        self.list = self.problem.actions()
 
-    def IDS(self):
-        for depth in range(0, self.MAX):
-            print("Depth", depth)
-            result = self.DLS(depth)
+    def SA(self):
+        states = []
+        current = self.initial_state
+        for t in range(sys.maxsize):
+            states.append(current)
 
-            if result != "cutoff":
-                return result
+            if schedule(t=t, k=20, lam=0.005, limit=self.MAX) == 0:
+                return states
 
-    def DLS(self, limit):
-        return self.recursiveDLS(self.initial_state, limit)
+            neighbors = []
+            for l in list:
+                neighbors.append(self.child_node(current, l))
 
-    def recursiveDLS(self, square, limit):
-        if self.problem.goalTest(square):
-            return square
-        elif limit == 0:
-            return "cutoff"
-        else:
-            cutoff = False
-            actions = self.problem.actions()
-            for action in actions:
-                child = self.childNode(square, action)
-                result = self.recursiveDLS(child, limit - 1)
-                if result == "cutoff":
-                    cutoff = True
-                elif result != False:
-                    return result
-            return "cutoff" if cutoff else False
+            if not neighbors:
+                return False
 
-    def childNode(self, square, action):
+            delta_e = -1 * (self.problem.goal_test(random.choice(neighbors)) - self.problem.goal_test(current))
+            print(delta_e, self.problem.goal_test(random.choice(neighbors)), self.problem.goal_test(current))
+
+            if delta_e > 0 or probability(math.exp(delta_e / schedule(t=t, k=20, lam=0.005, limit=self.MAX))):
+                current = random.choice(neighbors)
+
+    def child_node(self, square, action):
         [(x, y), (x2, y2)] = action
-        square[x][y], square[x2][y2] = square[x2][y2], square[x][y]
-        return square
+        child = np.array(square)
+        child[x][y], child[x2][y2] = child[x2][y2], child[x][y]
+        return child.tolist()
 # ******************************************************************************************************************** #
 class Problem:
     def __init__(self, size):
@@ -59,7 +65,7 @@ class Problem:
                     action_list.append([(i, j), (i + 1, j)])
         self.action_list = action_list
 
-    def goalTest(self, square):
+    def goal_test(self, square):
         test_list = [0] * (2 * self.size + 2)
         for i in range(0, self.size):
             for j in range(0, self.size):
@@ -71,9 +77,8 @@ class Problem:
                     test_list[-1] += square[i][j]
 
         for i in test_list:
-            if i != self.magic_number:
-                return False
-        return True
+            return sum([abs(i - self.magic_number)])
+
 
     def actions(self):
         return self.action_list
@@ -84,15 +89,13 @@ if __name__ == "__main__":
     for size, square in fileToList("a.in"):
         fields.append((size, square))
 
-    agent = Agent(fields[0][0], fields[0][1])
-    print(fields[0][0], fields[0][1])
-
+    agent = Agent(fields[0][0], fields[0][1], 1000)
     tick = datetime.now()
-    result = agent.IDS()
+    result = agent.SA()
     tack = datetime.now()
     pprint(result)
 
     print(tack - tick)
 
-    with open('IDS.out', 'w') as f:
-        f.write('out=' + str(result) + ', t=' + str(tack - tick))
+    with open('SimulatedAnnealing.out', 'w') as f:
+        f.write('out=' + str(result[-1]) + ', t=' + str(tack - tick))
